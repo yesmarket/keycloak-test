@@ -1,0 +1,53 @@
+version: '3.5'
+
+networks:
+  keycloak:
+    # driver: overlay
+    
+volumes:
+  postgres_data:
+      driver: local
+
+services:
+
+  postgres:
+    image: postgres:10.5-alpine
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.role==worker
+    #       - node.platform.os==linux
+    environment:
+      POSTGRES_DB: $DATABASE_NAME
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_USER: $DATABASE_USER
+      POSTGRES_PASSWORD: $DATABASE_PASSWORD
+    ports:
+      - 5432:5432
+    networks:
+      - keycloak
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: jboss/keycloak:4.5.0.Final
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.role==worker
+    #       - node.platform.os==linux
+    environment:
+      DB_VENDOR: postgres
+      DB_ADDR: postgres
+      DB_PORT: 5432
+      DB_DATABASE: $DATABASE_NAME
+      DB_USER: $DATABASE_USER
+      DB_PASSWORD: $DATABASE_PASSWORD
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: password
+    ports:
+      - 8080:8080
+    networks:
+      - keycloak
+    depends_on:
+      - postgres
